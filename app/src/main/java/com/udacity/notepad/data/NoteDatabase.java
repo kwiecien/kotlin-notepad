@@ -24,6 +24,46 @@ public class NoteDatabase {
         helper = new NotesOpenHelper(context);
     }
 
+    private static Note fromCursor(Cursor cursor) {
+        int col = 0;
+        Note note = new Note();
+        note.setId(cursor.getInt(col++));
+        note.setText(cursor.getString(col++));
+        note.setPinned(cursor.getInt(col++) != 0);
+        note.setCreatedAt(new Date(cursor.getLong(col++)));
+        note.setUpdatedAt(new Date(cursor.getLong(col)));
+        return note;
+    }
+
+    private static List<Note> allFromCursor(Cursor cursor) {
+        List<Note> retval = new ArrayList<>();
+        while (cursor.moveToNext()) {
+            retval.add(fromCursor(cursor));
+        }
+        return retval;
+    }
+
+    private static ContentValues fromNote(Note note) {
+        ContentValues values = new ContentValues();
+        int id = note.getId();
+        if (id != -1) {
+            values.put(_ID, id);
+        }
+        values.put(TEXT, note.getText());
+        values.put(IS_PINNED, note.isPinned());
+        values.put(CREATED_AT, note.getCreatedAt().getTime());
+        values.put(UPDATED_AT, note.getUpdatedAt().getTime());
+        return values;
+    }
+
+    private static List<ContentValues> fromNotes(Note[] notes) {
+        List<ContentValues> values = new ArrayList<>();
+        for (Note note : notes) {
+            values.add(fromNote(note));
+        }
+        return values;
+    }
+
     public List<Note> getAll() {
         Cursor cursor = helper.getReadableDatabase().query(_TABLE_NAME,
                 null,
@@ -82,52 +122,12 @@ public class NoteDatabase {
         helper.getWritableDatabase().update(_TABLE_NAME,
                 values,
                 _ID + " = ?",
-                new String[]{ Integer.toString(note.getId()) });
+                new String[]{Integer.toString(note.getId())});
     }
 
     public void delete(Note note) {
         helper.getWritableDatabase().delete(_TABLE_NAME,
                 _ID + " = ?",
-                new String[]{ Integer.toString(note.getId()) });
-    }
-
-    private static Note fromCursor(Cursor cursor) {
-        int col = 0;
-        Note note = new Note();
-        note.setId(cursor.getInt(col++));
-        note.setText(cursor.getString(col++));
-        note.setPinned(cursor.getInt(col++) != 0);
-        note.setCreatedAt(new Date(cursor.getLong(col++)));
-        note.setUpdatedAt(new Date(cursor.getLong(col)));
-        return note;
-    }
-
-    private static List<Note> allFromCursor(Cursor cursor) {
-        List<Note> retval = new ArrayList<>();
-        while (cursor.moveToNext()) {
-            retval.add(fromCursor(cursor));
-        }
-        return retval;
-    }
-
-    private static ContentValues fromNote(Note note) {
-        ContentValues values = new ContentValues();
-        int id = note.getId();
-        if (id != -1) {
-            values.put(_ID, id);
-        }
-        values.put(TEXT, note.getText());
-        values.put(IS_PINNED, note.isPinned());
-        values.put(CREATED_AT, note.getCreatedAt().getTime());
-        values.put(UPDATED_AT, note.getUpdatedAt().getTime());
-        return values;
-    }
-
-    private static List<ContentValues> fromNotes(Note[] notes) {
-        List<ContentValues> values = new ArrayList<>();
-        for (Note note : notes) {
-            values.add(fromNote(note));
-        }
-        return values;
+                new String[]{Integer.toString(note.getId())});
     }
 }
